@@ -21,13 +21,13 @@ M.config --[[@type vim.lsp.ClientConfig]] = {
     end,
 
     -- Handle log events - one particular important log message is for handling authentication errors
-    ['window/logMessage'] = function(_, result, _ctx)
+    ['window/logMessage'] = function(_, params, _ctx)
       if
-        result
-        and result.message
+        params
+        and params.message
         and (
-          string.find(result.message, 'Authorization failed, bearer token is not set')
-          or string.find(result.message, 'The bearer token included in the request is invalid.')
+          string.find(params.message, 'Authorization failed, bearer token is not set')
+          or string.find(params.message, 'The bearer token included in the request is invalid.')
         )
       then
         -- Try auto-login, to avoid noisy "Connection expired" message.
@@ -40,10 +40,22 @@ M.config --[[@type vim.lsp.ClientConfig]] = {
       end
     end,
     -- Handle window events - this is used to display the authentication url and code to the user
-    ['window/showMessage'] = function(_, result, _ctx)
-      if result and result.message then
-        util.show_popup(M.fmt_msg(result))
+    ['window/showMessage'] = function(_, params, _ctx)
+      if params and params.message then
+        util.show_popup(M.fmt_msg(params))
       end
+    end,
+    -- Handle 'window/showDocument', esp. the `external` field so the LS can navigate the user to web URLs.
+    ['window/showDocument'] = function(_, params, ctx)
+      if params and params.external then
+        vim.ui.open(params.uri)
+        return
+      end
+
+      local client = assert(vim.lsp.get_client_by_id(ctx.client_id))
+      local loc = { uri = params.uri, range = params.selection }
+      local opts = { reuse_win = true, focus = params.takeFocus }
+      vim.lsp.util.show_document(loc, client.offset_encoding, opts)
     end,
   },
   -- Add any additional LSP server configuration options here
