@@ -38,7 +38,7 @@ require('amazonq').setup({
 3. Run `:AmazonQ` from any file.
 4. *Optional:* Code completions are provided by the "textDocument/completion" LSP method, which "just works" with most autocompletion plugins.
     - Note: completion is limited to supported filetypes.
-    - See [Code Completions](#code-completions).
+    - See [Inline Code Suggestions](#inline-code-suggestions).
 
 ### Using vim-plug
 
