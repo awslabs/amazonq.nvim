@@ -235,7 +235,7 @@ function M.open_chat()
     end
 
     assert(chatbuf)
-    vim.cmd[[normal! G$]]  -- Place cursor at end of prompt.
+    vim.cmd [[normal! G$]] -- Place cursor at end of prompt.
 
     -- User or a plugin may have deleted/unloaded the buffer.
     -- Then we need to reinitialize it.
@@ -401,7 +401,7 @@ function M.init_prompt()
   local msg = {
     "Hi, I'm Amazon Q. Ask me anything.",
     '- For simple (single-line) prompts, insert directly in this buffer.',
-    '- For multline prompts, type `cc` in this buffer, or `zq` on selected text.',
+    '- For multiline prompts, type `cc` in this buffer, or `zq` on selected text.',
     '- Type `cC` to edit the global context (inserted before every prompt).',
     '- Hit `<Enter>` to send the current prompt.',
     '- See `:help amazonq` for documentation.',

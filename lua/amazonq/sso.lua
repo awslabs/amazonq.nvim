@@ -9,7 +9,7 @@ M.client = nil
 --- @type string SSO start URL from plugin configuration
 M.sso_start_url = nil
 
--- Handler for 'aws/credentials/token/update' repsonse
+-- Handler for 'aws/credentials/token/update' response
 function M.on_update_credentials(_, _, _)
   util.dismiss_popup()
   util.msg('updated SSO token', vim.log.levels.INFO)
