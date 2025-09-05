@@ -43,7 +43,7 @@ M.config --[[@type vim.lsp.ClientConfig]] = {
     ['window/showMessage'] = function(_, result, _ctx)
       if result and result.message then
         local popup_win = util.show_popup(M.fmt_msg(result))
-        M.handle_sso_msg(result, popup_win)
+        M.on_sso_msg(result, popup_win)
       end
     end,
   },
@@ -66,7 +66,7 @@ M.config --[[@type vim.lsp.ClientConfig]] = {
 --- @param result table LSP showMessage result
 --- @param popup_win integer Popup window handle
 --- @return boolean true if SSO behavior was injected
-function M.handle_sso_msg(result, popup_win)
+function M.on_sso_msg(result, popup_win)
   if not vim.api.nvim_win_is_valid(popup_win) then
     return false
   end
@@ -85,12 +85,12 @@ function M.handle_sso_msg(result, popup_win)
   local buf = vim.api.nvim_win_get_buf(popup_win)
   -- For popup buffer only, add keymap to open url
   vim.keymap.set('n', '<CR>', function()
-    util.open(auth_url)
+    pcall(vim.ui.open, auth_url)
   end, { buffer = buf, nowait = true, silent = true })
   -- Update the popup content to include instructions
-  util.with_modifiable(buf, function()
-    vim.api.nvim_buf_set_lines(buf, 1, 1, false, { '', 'Press <Enter> to open URL in browser' })
-  end)
+  vim.bo[buf].modifiable = true
+  pcall(vim.api.nvim_buf_set_lines, buf, 1, 1, false, { '', 'Press <Enter> to open URL in browser' })
+  vim.bo[buf].modifiable = false
 
   return true
 end
