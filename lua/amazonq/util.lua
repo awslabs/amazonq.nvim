@@ -217,4 +217,25 @@ function M.indent(indent_width, lines)
   return type(lines) == 'string' and table.concat(indented, '\n') or indented
 end
 
+--- Temporarily makes a buffer modifiable, executes function, then restores original state
+--- @param buf integer Buffer handle
+--- @param fn function Function to execute while buffer is modifiable
+function M.with_modifiable(buf, fn)
+  local was_modifiable = vim.bo[buf].modifiable
+  vim.bo[buf].modifiable = true
+  fn()
+  vim.bo[buf].modifiable = was_modifiable
+end
+
+--- Opens a path (file or URL) in the system's default browser.
+--- @param path string The path to open
+function M.open(path)
+  local success = pcall(vim.ui.open, path)
+  if success then
+    M.msg('Opened: ' .. path)
+  else
+    M.msg('Failed to open: ' .. path)
+  end
+end
+
 return M
