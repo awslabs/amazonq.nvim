@@ -76,6 +76,10 @@ function M.show_popup(text, max_width, max_height)
   })
   vim.api.nvim_set_current_win(win)
   popup_win = win
+
+  -- Allow for modification of SSO message.
+  M.try_format_sso_msg(text)
+
   return win
 end
 
@@ -87,6 +91,39 @@ function M.dismiss_popup()
   end
   vim.api.nvim_win_close(popup_win, false)
   popup_win = nil
+end
+
+--- Injects SSO authentication behavior into an existing popup window if necessary.
+--- @param message string The popup message.
+--- @return boolean true if SSO behavior was injected.
+function M.try_format_sso_msg(message)
+  if not popup_win or not vim.api.nvim_win_is_valid(popup_win) then
+    return false
+  end
+
+  -- Compose the auth_url
+  -- regex pattern is very specific to the existing display, but will be ignored if no match is found
+  local base_url, user_code = message:match(
+    '^To proceed, open the login page (https://[^%s]+) and provide this code to confirm the access request: ([A-Z0-9%-]+)\n'
+  )
+  if not (base_url and user_code) then
+    return false
+  end
+  local auth_url = base_url .. '?user_code=' .. user_code
+
+  -- modify the popup window buffer
+  local buf = vim.api.nvim_win_get_buf(popup_win)
+  -- For popup buffer only, add keymap to open url
+  vim.keymap.set('n', '<CR>', function()
+    vim.ui.open(auth_url)
+  end, { buffer = buf, nowait = true, silent = true })
+  -- Update the popup content to include instructions
+  local was_modifiable = vim.bo[buf].modifiable
+  vim.bo[buf].modifiable = true
+  pcall(vim.api.nvim_buf_set_lines, buf, 1, 1, false, { '', auth_url, '', 'Press <Enter> to open URL in browser' })
+  vim.bo[buf].modifiable = was_modifiable
+
+  return true
 end
 
 local html_entities = {
