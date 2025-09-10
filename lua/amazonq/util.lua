@@ -78,7 +78,7 @@ function M.show_popup(text, max_width, max_height)
   popup_win = win
 
   -- Allow for modification of SSO message.
-  M.on_sso_msg(text)
+  M.try_format_sso_msg(text)
 
   return win
 end
@@ -93,10 +93,10 @@ function M.dismiss_popup()
   popup_win = nil
 end
 
---- Injects SSO authentication behavior into an existing popup window
+--- Injects SSO authentication behavior into an existing popup window if necessary.
 --- @param message string The popup message.
---- @return boolean true if SSO behavior was injected
-function M.on_sso_msg(message)
+--- @return boolean true if SSO behavior was injected.
+function M.try_format_sso_msg(message)
   if not popup_win or not vim.api.nvim_win_is_valid(popup_win) then
     return false
   end
