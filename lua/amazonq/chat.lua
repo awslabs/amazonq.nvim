@@ -724,6 +724,7 @@ function M.append(lines)
   last_changetick = math.huge -- Disable TextChanged handler.
   assert(chatbuf)
   api.nvim_buf_set_lines(chatbuf, -2, -1, false, lines)
+  local promptline = vim.fn.line('$')
 
   -- Scroll to the end of the window
   if chatwin() then
@@ -736,6 +737,10 @@ function M.append(lines)
   vim.schedule(function()
     -- Enable TextChanged handler.
     last_changetick = api.nvim_buf_get_changedtick(chatbuf)
+
+    if vim.fn.has('nvim-0.12') == 1 then
+      vim.api.nvim_buf_set_mark(chatbuf, ':', promptline, 1, {})
+    end
   end)
 end
 
