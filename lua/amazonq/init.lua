@@ -15,6 +15,11 @@ local function path_to_langserver()
   return f
 end
 
+--- @param scope 'global' | 'local' | 'prompt'
+function M.ctxfile(scope)
+  return chat.ctxfile(scope)
+end
+
 function M.setup(opts)
   local cmd = opts.cmd and opts.cmd or {
     'node',

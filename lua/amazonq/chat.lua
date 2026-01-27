@@ -83,6 +83,16 @@ local function chatwin()
   return wins[1]
 end
 
+local function get_nvim_instance_id()
+  local cwd = vim.fn.getcwd()
+  -- Create a simple hash of the path
+  local hash = 0
+  for i = 1, #cwd do
+    hash = (hash * 31 + string.byte(cwd, i)) % 0x7fffffff
+  end
+  return tostring(hash)
+end
+
 --- Gets the location of the specified chat context file.
 ---
 --- @param scope 'global' | 'local' | 'prompt'
@@ -92,8 +102,8 @@ local function ctxfile(scope)
   elseif scope == 'prompt' then
     return vim.fs.joinpath(util.datadir(), 'chat-prompt.md')
   elseif scope == 'local' then
-    -- TODO: need to think about this
-    error('not implemented yet')
+    local instance_id = get_nvim_instance_id()
+    return vim.fs.joinpath(util.datadir(), string.format('chat-local-%s.md', instance_id))
   else
     error()
   end
@@ -262,6 +272,9 @@ function M.open_chat()
 
   -- buffer-local mappings
   vim.keymap.set('n', '<c-c>', on_prompt_cancel, { buffer = chatbuf })
+  vim.keymap.set('n', 'cl', function()
+    edit_ctxfile('local')
+  end, { buffer = chatbuf })
   vim.keymap.set('n', 'cC', function()
     edit_ctxfile('global')
   end, { buffer = chatbuf })
@@ -395,6 +408,14 @@ function M.toggle()
   end
 end
 
+function M.add_to_local_context(data)
+    add_ctx('prompt', data)
+end
+
+function M.get_context_file()
+  return ctxfile('local')
+end
+
 --- Set initial prompt
 function M.init_prompt()
   assert(chatbuf)
@@ -403,12 +424,14 @@ function M.init_prompt()
     '- For simple (single-line) prompts, insert directly in this buffer.',
     '- For multline prompts, type `cc` in this buffer, or `zq` on selected text.',
     '- Type `cC` to edit the global context (inserted before every prompt).',
+    '- Type `lC` to edit the local context (inserted before every prompt, after global context).',
     '- Hit `<Enter>` to send the current prompt.',
     '- See `:help amazonq` for documentation.',
   }
   local globalctx = get_ctx('global')
   if '' ~= vim.trim(globalctx) then
     table.insert(msg, '')
+    table.insert(msg, ('Using local context: %s'):format(vim.fn.fnamemodify(ctxfile('local'), ':~')))
     table.insert(msg, ('Using global context: %s'):format(vim.fn.fnamemodify(ctxfile('global'), ':~')))
   end
   table.insert(msg, '')
@@ -493,6 +516,7 @@ function M.clear()
 
   M.init_prompt()
   clear_ctx('prompt')
+  clear_ctx('local')
 
   -- Server implementation: https://github.com/aws/language-servers/blob/7ce6b947b96954f8c552e5053ebc437502f66cd3/server/aws-lsp-codewhisperer/src/language-server/chat/chatController.ts#L333
   lsp.lsp_request(M.lsp_client, 'aws/chat/sendChatQuickAction', {
@@ -737,6 +761,13 @@ function M.append(lines)
     -- Enable TextChanged handler.
     last_changetick = api.nvim_buf_get_changedtick(chatbuf)
   end)
+end
+
+--- Gets the path of the specified chat context file.
+---
+--- @param scope 'global' | 'local' | 'prompt'
+function M.ctxfile(scope)
+  return ctxfile(scope)
 end
 
 local paste_lines = { '' }
